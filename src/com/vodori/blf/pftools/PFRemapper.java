@@ -1,10 +1,11 @@
 /*
 	Copyright 2011 Vodori Inc.
-	The following code is provided as is. Vodori Inc. makes no guarantees to its effectiveness, and cannot be
-	held liable for prodsffdsf sdf TODO
+
+	The following code is provided "as is" and without warranty of any kind.
  */
 
 package com.vodori.blf.pftools;
+
 
 import com.sun.istack.internal.NotNull;
 
