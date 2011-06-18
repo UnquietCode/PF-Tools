@@ -1,10 +1,15 @@
-PF Tools is comprises a few tools that have been created specially for dealing with property files in Java code. The primary goal is to provide better tools for the organization and manipulation of property files.
+PF Tools comprises a few tools that have been created specially for dealing with property files in Java code.
+The primary goal is to provide better tools for the organization and manipulation of property files.
 
 Several tools are in various stages of development and cleanup. They will be added incrementally.
-Please feel free to contribute any code which you feel will enhance the toolset!
+Please feel free to contribute any code which you think will enhance the toolset!
 
 As well, please note that the code is provided "as is" and without warranty of any kind.
 
 
 Components:
-1. PFRemapper - uses a template property file to reorganize and remap values in another file. Useful for applying changes to multiple files in multiple languages. The program allows the user to specify strings which are to be remapped to other strings. Property codes which are not remapped are automatically removed, allowing easy consolidation of duplicate codes.
+1. PFRemapper
+	Uses a template property file to reorganize and remap values in another file.Useful for applying changes to
+	multiple files in multiple languages. The program allows the user to specify strings which are to be remapped
+	to other strings. Property codes which are not remapped are automatically removed, allowing easy consolidation
+	of duplicate codes.

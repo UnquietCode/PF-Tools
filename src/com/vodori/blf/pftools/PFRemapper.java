@@ -64,6 +64,7 @@ public class PFRemapper {
 		remappings = null;
 	}
 
+
 	/*
 		Main method.
 	 */
@@ -127,6 +128,24 @@ public class PFRemapper {
 		}
 	}
 
+	/*
+	  Convenience method for opening a remapping file and using its contents
+	*/
+	public static void remap(String templateFile, String editFile, String outputFile, String remappings) {
+		try {
+			Scanner scanner = getReader(remappings);
+			StringBuilder sb = new StringBuilder();
+
+			while (scanner.hasNext()) {
+				sb.append(scanner.next());
+			}
+
+			remap(templateFile, editFile, outputFile, createMap(sb.toString()));
+		} catch (Exception ex) {
+			throw new PFRemapperException("Error opening remappings  file.", ex);
+		}
+	}
+
 	private static ArrayList<String> readLines(String fileName, boolean ignoreComments) {
 		Scanner scanner;
 		ArrayList<String> lines = new ArrayList<String>();
@@ -177,24 +196,6 @@ public class PFRemapper {
 		return lines;
 	}
 
-	/*
-	  Convenience method for opening a remapping file and using its contents
-	*/
-	public static void remap(String templateFile, String editFile, String outputFile, String remappings) {
-		try {
-			Scanner scanner = getReader(remappings);
-			StringBuilder sb = new StringBuilder();
-
-			while (scanner.hasNext()) {
-				sb.append(scanner.next());
-			}
-
-			remap(templateFile, editFile, outputFile, createMap(sb.toString()));
-		} catch (Exception ex) {
-			throw new PFRemapperException("Error opening remappings  file.", ex);
-		}
-	}
-
 	private static void buildOutputFile() {
 		for (String tLine : templateFile) {
 
@@ -238,16 +239,11 @@ public class PFRemapper {
 		}
 	}
 
-	private static class PFRemapperException extends RuntimeException {
-		PFRemapperException(String message) {
-			super(message);
-		}
-
-		PFRemapperException(String message, Throwable cause) {
-			super(message, cause);
-		}
-	}
-
+	/*
+		Create a map from a string representing the various mappings.
+		The format should be:
+			"{new1:old1, new2:old2 , new3 : old1}"  ...etc
+	 */
 	public static @NotNull Map<String, Set<String>> createMap(String input) {
 		Map<String, Set<String>> map = new HashMap<String, Set<String>>();
 
@@ -275,7 +271,6 @@ public class PFRemapper {
 		return map;
 	}
 
-
 	/*
 		If running from this file directly.
 
@@ -286,7 +281,7 @@ public class PFRemapper {
 	 */
 	public static void main(String args[]) {
 		if (args.length < 3) {
-			System.err.println("Proper usage is:\n\tteplateFile editFile outputFile {optional:mappings}");
+			System.err.println("Proper usage is:\n\ttemplateFile editFile outputFile {optional:mappings}");
 		}
 
 		Map<String, Set<String>> remappings = null;
@@ -295,5 +290,17 @@ public class PFRemapper {
 		}
 
 		remap(args[0], args[1], args[2], remappings);
+	}
+
+	/// Exceptions
+
+	private static class PFRemapperException extends RuntimeException {
+		PFRemapperException(String message) {
+			super(message);
+		}
+
+		PFRemapperException(String message, Throwable cause) {
+			super(message, cause);
+		}
 	}
 }
