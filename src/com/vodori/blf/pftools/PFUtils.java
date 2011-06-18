@@ -44,7 +44,6 @@ public final class PFUtils {
 
 		line = line.trim();
 
-		// TODO there must be a decent regex for this...
 		// only odd numbers of slashes denote multiline, so remove every pair
 		while (line.endsWith("\\\\")) {
 			line = line.substring(0, line.length()-4);

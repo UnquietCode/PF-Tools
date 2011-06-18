@@ -84,79 +84,15 @@ public class PFRemapper {
 
 			initialize();
 
-			// open the template file
-			try {
-				scanner = getReader(templateFile);
-			} catch (Exception ex) {
-				throw new PFRemapperException("Could not open template file for reading.", ex);
-			}
+			// get the template file data
+			PFRemapper.templateFile = readLines(templateFile, false);
 
-			// read in the template file
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-
-				// Have to consume the leading BOM if present. Thanks Java!
-				if (line.startsWith(BOM)) { line = line.substring(1); }
-
-				if (isMultiLine(line)) {
-					// consume additional connected lines
-					while (true) {
-						if (!scanner.hasNextLine()) {
-							throw new PFRemapperException("Unexpected end of template file.");
-						}
-
-						String nextLine = scanner.nextLine();
-						line += nextLine;
-
-						if (isMultiLine(nextLine)) {
-							continue;
-						} else {
-							break;
-						}
-					}
-				}
-
-				PFRemapper.templateFile.add(line);
-			}
-			scanner.close();
-
-			// open the edit file
-			try {
-				scanner = getReader(editFile);
-			} catch (Exception ex) {
-				throw new PFRemapperException("Could not open edit file for reading.", ex);
-			}
-
-			// read in the edit file
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-				if (line.startsWith(BOM)) { line = line.substring(1); }
-
-				if (isComment(line) || line.trim().isEmpty()) {
-					continue;
-				} else if (isMultiLine(line)) {
-					// consume additional connected lines
-					while (true) {
-						if (!scanner.hasNextLine()) {
-							throw new PFRemapperException("Unexpected end of edit file.");
-						}
-
-						String nextLine = scanner.nextLine();
-						line += nextLine;
-
-						if (isMultiLine(nextLine)) {
-							continue;
-						} else {
-							break;
-						}
-					}
-				}
-
+			// get the edit file data
+			for (String line : readLines(editFile, true)) {
 				String code = getCode(line);
 				String message = getMessage(line);
 				PFRemapper.editFile.put(code, message);
 			}
-			scanner.close();
 
 			// construct the output file
 			buildOutputFile();
@@ -191,7 +127,7 @@ public class PFRemapper {
 		}
 	}
 
-	private ArrayList<String> readLines(String fileName, boolean ignoreComments) {
+	private static ArrayList<String> readLines(String fileName, boolean ignoreComments) {
 		Scanner scanner;
 		ArrayList<String> lines = new ArrayList<String>();
 
@@ -237,6 +173,7 @@ public class PFRemapper {
 			lines.add(line);
 		}
 
+		scanner.close();
 		return lines;
 	}
 
