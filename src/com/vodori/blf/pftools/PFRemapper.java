@@ -35,9 +35,6 @@ import java.util.*;
  * Comments of this form will be skipped when rendering the output file.
  */
 public class PFRemapper {
-	static final String NL = System.getProperty("line.separator");
-	static final String BOM = "\uFEFF";
-
 	private static List<String> templateFile;
 	private static Map<String, String> editFile;
 	private static List<String> outputFile;
@@ -86,10 +83,10 @@ public class PFRemapper {
 			initialize();
 
 			// get the template file data
-			PFRemapper.templateFile = readLines(templateFile, false);
+			PFRemapper.templateFile = readLines(templateFile, false, false);
 
 			// get the edit file data
-			for (String line : readLines(editFile, true)) {
+			for (String line : readLines(editFile, true, true)) {
 				String code = getCode(line);
 				String message = getMessage(line);
 				PFRemapper.editFile.put(code, message);
@@ -118,7 +115,7 @@ public class PFRemapper {
 				throw new PFRemapperException("Error writing output file.", ex);
 			}
 		} catch (RuntimeException ex) {
-			throw ex;
+			throw new PFRemapperException("Something went wrong.", ex);
 		} finally {
 			if (scanner != null) {
 				scanner.close();
@@ -131,22 +128,11 @@ public class PFRemapper {
 	/*
 	  Convenience method for opening a remapping file and using its contents
 	*/
-	public static void remap(String templateFile, String editFile, String outputFile, String remappings) {
-		try {
-			Scanner scanner = getReader(remappings);
-			StringBuilder sb = new StringBuilder();
-
-			while (scanner.hasNext()) {
-				sb.append(scanner.next());
-			}
-
-			remap(templateFile, editFile, outputFile, createMap(sb.toString()));
-		} catch (Exception ex) {
-			throw new PFRemapperException("Error opening remappings  file.", ex);
-		}
+	public static void remap(String templateFile, String editFile, String outputFile, String remappingFileOrString) {
+		remap(templateFile, editFile, outputFile, createMap(getStringOrFile(remappingFileOrString)));
 	}
 
-	private static ArrayList<String> readLines(String fileName, boolean ignoreComments) {
+	private static ArrayList<String> readLines(String fileName, boolean ignoreComments, boolean ignoreBlankLines) {
 		Scanner scanner;
 		ArrayList<String> lines = new ArrayList<String>();
 
@@ -168,8 +154,10 @@ public class PFRemapper {
 				first = false;
 			}
 
-			if ((ignoreComments && isComment(line)) || line.trim().isEmpty()) {
-				continue;
+			if (isComment(line)) {
+				if (ignoreComments) { continue; }
+			} else if (line.trim().isEmpty()) {
+				if (ignoreBlankLines) { continue; }
 			} else if (isMultiLine(line)) {
 
 				// consume additional connected lines
@@ -199,8 +187,8 @@ public class PFRemapper {
 	private static void buildOutputFile() {
 		for (String tLine : templateFile) {
 
-			// only copy #comments
-			if (isComment(tLine) || tLine.trim().isEmpty()) {
+			// only copy #comments and blank lines
+			if (tLine.trim().isEmpty() || isComment(tLine)) {
 				if (!tLine.trim().startsWith("!")) {
 					outputFile.add(tLine);
 				}
@@ -271,6 +259,33 @@ public class PFRemapper {
 		return map;
 	}
 
+	private static String getStringOrFile(String stringOrFile) {
+		File file = new File(stringOrFile);
+
+		if (file.isFile()) {
+			StringBuilder sb = new StringBuilder();
+			Scanner scanner = null;
+
+			try {
+				scanner = getReader(stringOrFile);
+				while (scanner.hasNextLine()) {
+					String line = scanner.nextLine();
+					if (line.startsWith(BOM)) {	line = line.substring(1); }
+					sb.append(line);
+				}
+			} catch (Exception ex) {
+				throw new PFRemapperException("Could not open file for reading.", ex);
+			} finally {
+				if (scanner != null) { scanner.close(); }
+			}
+
+			return sb.toString();
+		} else {
+			return stringOrFile;
+		}
+	}
+
+
 	/*
 		If running from this file directly.
 
@@ -281,12 +296,12 @@ public class PFRemapper {
 	 */
 	public static void main(String args[]) {
 		if (args.length < 3) {
-			System.err.println("Proper usage is:\n\ttemplateFile editFile outputFile {optional:mappings}");
+			System.err.println("Proper usage is:\n\ttemplateFile editFile outputFile mappingFile|{optional:mappings}");
 		}
 
 		Map<String, Set<String>> remappings = null;
 		if (args.length > 3) {
-			remappings = createMap(args[3]);
+			remappings = createMap(getStringOrFile(args[3]));
 		}
 
 		remap(args[0], args[1], args[2], remappings);

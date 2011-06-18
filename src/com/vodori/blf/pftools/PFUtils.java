@@ -8,6 +8,16 @@ import java.util.*;
  * @version 06-05-2011
  */
 public final class PFUtils {
+	public static final String NL = System.getProperty("line.separator");
+	public static final String BOM = "\uFEFF";
+	private static int RANDOM_SEPARATOR;
+
+	static {
+		Random gen = new Random();
+		RANDOM_SEPARATOR = gen.nextInt(Integer.MAX_VALUE-1223334) + 11223334;
+	}
+
+
 	public static Scanner getReader(String file) throws IOException {
 		FileInputStream fis = new FileInputStream(file);
 		InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
@@ -23,6 +33,9 @@ public final class PFUtils {
 	}
 
 	public static String[] getParts(String line) {
+		//TODO leading whitespace is lost. How to restore?
+		line = line.replaceAll("\\\\", RANDOM_SEPARATOR+"\\\\"+NL);
+
 		Properties properties = new Properties();
 		try {
 			properties.load(new StringReader(line));
@@ -33,6 +46,10 @@ public final class PFUtils {
 		for (Object prop : properties.keySet()) {
 			String key = (String) prop;
 			String value = (String) properties.get(prop);
+
+			key = key.replaceAll(""+RANDOM_SEPARATOR, "\\\\");
+			value = value.replaceAll(""+RANDOM_SEPARATOR, "\\\\");
+
 			return new String[]{key, value};
 		}
 
@@ -46,9 +63,9 @@ public final class PFUtils {
 
 		// only odd numbers of slashes denote multiline, so remove every pair
 		while (line.endsWith("\\\\")) {
-			line = line.substring(0, line.length()-4);
+			line = line.substring(0, line.length()-2);
 		}
-
+		
 		return line.endsWith("\\");
 	}
 
