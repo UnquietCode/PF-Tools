@@ -8,6 +8,7 @@ package com.vodori.blf.pftools;
 
 
 import com.sun.istack.internal.NotNull;
+import static com.vodori.blf.pftools.PFUtils.*;
 
 import java.io.*;
 import java.lang.Exception;
@@ -190,6 +191,55 @@ public class PFRemapper {
 		}
 	}
 
+	private ArrayList<String> readLines(String fileName, boolean ignoreComments) {
+		Scanner scanner;
+		ArrayList<String> lines = new ArrayList<String>();
+
+		// open the file
+		try {
+			scanner = getReader(fileName);
+		} catch (Exception ex) {
+			throw new PFRemapperException("Could not open file for reading.", ex);
+		}
+
+		// read in the file
+		boolean first = true;
+		while (scanner.hasNextLine()) {
+			String line = scanner.nextLine();
+			
+			// Have to consume the leading BOM if present. Thanks Java!
+			if (first) {
+				if (line.startsWith(BOM)) {	line = line.substring(1); }
+				first = false;
+			}
+
+			if ((ignoreComments && isComment(line)) || line.trim().isEmpty()) {
+				continue;
+			} else if (isMultiLine(line)) {
+
+				// consume additional connected lines
+				while (true) {
+					if (!scanner.hasNextLine()) {
+						throw new PFRemapperException("Unexpected end of file.");
+					}
+
+					String nextLine = scanner.nextLine();
+					line += nextLine;
+
+					if (isMultiLine(nextLine)) {
+						continue;
+					} else {
+						break;
+					}
+				}
+			}
+
+			lines.add(line);
+		}
+
+		return lines;
+	}
+
 	/*
 	  Convenience method for opening a remapping file and using its contents
 	*/
@@ -249,62 +299,6 @@ public class PFRemapper {
 				outputFile.add(code+ "=" +message);
 			}
 		}
-	}
-
-	private static Scanner getReader(String file) throws IOException {
-		FileInputStream fis = new FileInputStream(file);
-		InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
-		return new Scanner(isr);
-	}
-
-	private static String getCode(String line) {
-		// no null check please
-
-		line = line.trim();
-		int equals = line.indexOf("=");
-
-		return equals == -1
-			? null
-			: line.substring(0, equals);
-	}
-
-	private static String getMessage(String line) {
-		// no null check please
-
-		line = line.trim();
-		int equals = line.indexOf("=");
-
-		return equals == -1 || equals == line.length()
-			? null
-			: line.substring(equals+1);
-	}
-
-	private static boolean isMultiLine(String line) {
-		// no null check please
-
-		line = line.trim();
-		return line.endsWith("\\");
-	}
-
-	private static boolean isComment(String line) {
-		// no null check please
-		
-		line = line.trim();
-		return (line.startsWith("#") || line.startsWith("!"));
-	}
-
-	/*
-		Just like it sounds, adds a value to a multimap build from a key
-		and a set of values. If this is the first value for the key a
-		new java.util.HashSet is created.
-	 */
-	private static <K,V> void addToSet(K key, V value, Map<K, Set<V>> map) {
-		Set<V> set = map.containsKey(key)
-				   ? map.get(key)
-				   : new HashSet<V>();
-
-		set.add(value);
-		map.put(key, set);
 	}
 
 	private static class PFRemapperException extends RuntimeException {
