@@ -24,4 +24,14 @@ public class PFRemapperTest {
 			}
 		}
 	}
+
+	@Test
+	public void fileTest() {
+		String template = "/folder/file.properties";
+		String edit = "/folder/file.properties";
+		String output = "/folder/file.properties";
+		String mappings = "/folder/file.properties";
+
+		PFRemapper.remap(template, edit, output, mappings);
+	}
 }

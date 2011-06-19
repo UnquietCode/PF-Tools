@@ -2,6 +2,8 @@ package com.vodori.blf.pftools;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Benjamin Fagin
@@ -32,9 +34,20 @@ public final class PFUtils {
 		return getParts(line)[1];
 	}
 
+	private static final Pattern BREAK_FINDER = Pattern.compile("\\\\(\\s*)");
+	private static final String BREAK_REPLACER = RANDOM_SEPARATOR+"\\\\"+NL;
+	private static final String BREAK_RESTORER = ".*"+RANDOM_SEPARATOR+".*";
+
 	public static String[] getParts(String line) {
-		//TODO leading whitespace is lost. How to restore?
-		line = line.replaceAll("\\\\", RANDOM_SEPARATOR+"\\\\"+NL);
+		Matcher m = BREAK_FINDER.matcher(line);
+		ArrayList<String> matches = new ArrayList<String>();
+
+		while (m.find()) {
+			String s = m.group(1);
+			matches.add(s);
+		}
+
+		line = line.replaceAll("\\\\", BREAK_REPLACER);
 
 		Properties properties = new Properties();
 		try {
@@ -43,17 +56,26 @@ public final class PFUtils {
 			throw new RuntimeException(ex);
 		}
 
+		String key = null, value = null;
 		for (Object prop : properties.keySet()) {
-			String key = (String) prop;
-			String value = (String) properties.get(prop);
-
-			key = key.replaceAll(""+RANDOM_SEPARATOR, "\\\\");
-			value = value.replaceAll(""+RANDOM_SEPARATOR, "\\\\");
-
-			return new String[]{key, value};
+			key = (String) prop;
+			value = (String) properties.get(prop);
 		}
 
-		return null;
+		if (key == null || value == null) {
+			throw new RuntimeException("Unexpected null key/value pair.");
+		}
+
+		int i=0;
+		while (key.matches(BREAK_RESTORER)) {
+			key = key.replaceFirst(RANDOM_SEPARATOR+"", "\\\\"+matches.get(i++));
+		}
+
+		while (value.matches(BREAK_RESTORER)) {
+			value = value.replaceFirst(RANDOM_SEPARATOR+"", "\\\\"+matches.get(i++));
+		}
+
+		return new String[]{key, value};
 	}
 
 	public static boolean isMultiLine(String line) {
