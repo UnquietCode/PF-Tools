@@ -7,7 +7,6 @@
 package com.vodori.blf.pftools;
 
 
-import com.sun.istack.internal.NotNull;
 import static com.vodori.blf.pftools.PFUtils.*;
 
 import java.io.*;
@@ -204,13 +203,11 @@ public class PFRemapper {
 							break;
 						}
 					}
-				} else {
-					lookupCode = code;
 				}
 
-				// should not occur, but...
+				// either no remappings, or they were all unresolved
 				if (lookupCode == null) {
-					throw new PFRemapperException("Fatal error: Lookup code is null.");
+					lookupCode = code;
 				}
 
 				String message = editFile.get(lookupCode);
@@ -232,7 +229,7 @@ public class PFRemapper {
 		The format should be:
 			"{new1:old1, new2:old2 , new3 : old1}"  ...etc
 	 */
-	public static @NotNull Map<String, Set<String>> createMap(String input) {
+	public static Map<String, Set<String>> createMap(String input) {
 		Map<String, Set<String>> map = new HashMap<String, Set<String>>();
 
 		if (input == null) {
